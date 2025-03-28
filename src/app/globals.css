@@ -24,3 +24,55 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+button,
+input[type="checkbox"] {
+  cursor: pointer;
+}
+
+/* 
+      fontFamily: {
+        poppins: ["Poppins", "sans-serif"],
+      },
+      backgroundColor: {
+        "gradient-overlay-for-bg":
+          "linear-gradient(46.33deg, rgba(33, 33, 33, 0.839216) 0%, rgba(66, 66, 66, 0.239216) 178.98%)",
+      },
+      textColor: {},
+      backgroundImage: {
+        "login-bg": "url('/images/backgrounds/bg-login.png')",
+      },
+ */
+
+@layer components {
+  .gradient-overlay-for-bg {
+    background: linear-gradient(
+      46.33deg,
+      rgba(33, 33, 33, 0.839216) 0%,
+      rgba(66, 66, 66, 0.239216) 178.98%
+    );
+  }
+
+  .cream-bg {
+    background-color: #fafafa;
+  }
+}
+
+@layer utilities {
+  .login-bg {
+    background-image: url("/images/backgrounds/bg-login.png");
+  }
+
+  .font-poppins {
+    font-family: "Poppins", sans-serif;
+  }
+
+  .font-zen-kaku-gothic-antique {
+    font-family: "Zen Kaku Gothic Antique", sans-serif;
+  }
+}
+
+
+.bg-dotted-space {
+    background-image: url("data:image/svg+xml,%3Csvg width='42' height='44' viewBox='0 0 42 44' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M.747 43.22L41.736.229l.747 1.302L1.494 44.522l-.747-1.302zM0 0h42v42H0V0z' fill='%23F3F4F6'/%3E%3C/svg%3E");
+}
