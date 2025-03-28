@@ -1,7 +1,7 @@
 import PinButton from "@/components/Buttons/pin-button";
 import SecondaryButton from "@/components/Buttons/secondary-button";
-import Options_Icon from "../../../public/images/icons/options.svg";
-import ArrowDown_Icon from "../../../public/images/icons/arrow-down.svg";
+import Options_Icon from "../../public/images/icons/options.svg";
+import ArrowDown_Icon from "../../public/images/icons/arrow-down.svg";
 import Image from "next/image";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
