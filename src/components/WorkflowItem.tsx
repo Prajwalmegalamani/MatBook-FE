@@ -38,6 +38,7 @@ const WorkflowItem: React.FC<WorkflowItemProps> = ({ workflow, onPin }) => {
         status: newStatus,
         time: new Date().toLocaleString(),
       });
+      console.log(status);
       setIsExecuting(false);
     }, 3000);
   };

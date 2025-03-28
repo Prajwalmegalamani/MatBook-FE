@@ -8,7 +8,6 @@ import { useToast } from "@/hooks/use-toast";
 import Separators from "@/components/Separators/separators";
 import { useState } from "react";
 import { login } from "@/api/auth";
-import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/use-auth";
 
 export default function LoginPage() {
@@ -20,7 +19,6 @@ export default function LoginPage() {
   const [isEmailValid, setIsEmailValid] = useState<boolean>(true);
   const [isPasswordValid, setIsPasswordValid] = useState<boolean>(true);
   const [isRememberMeChecked, setIsRememberMeChecked] = useState<boolean>(true);
-  const router = useRouter();
 
   function handleRememberMeChange(e: React.ChangeEvent<HTMLInputElement>) {
     setIsRememberMeChecked(e.target.checked);

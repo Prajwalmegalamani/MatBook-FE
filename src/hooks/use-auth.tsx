@@ -1,11 +1,18 @@
 "use client";
-import { createContext, useContext, useEffect, useRef, useState } from "react";
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+  ReactNode,
+} from "react";
 import { useRouter } from "next/navigation";
 import { ACCESS_TOKEN_KEY, EMAIL, REFRESH_TOKEN_KEY } from "@/lib/constants";
 import { useToast } from "./use-toast";
 import client from "@/lib/axiosClient";
 import { getNewAccessToken } from "@/api/auth";
-
+import { AxiosError, InternalAxiosRequestConfig } from "axios";
 const removeOnLogoutKeys = [ACCESS_TOKEN_KEY, REFRESH_TOKEN_KEY];
 
 export interface ILoginData {
@@ -13,14 +20,17 @@ export interface ILoginData {
   refreshToken: string;
 }
 
-const AuthContext = createContext<{
+interface AuthContextType {
   userEmail: string | undefined;
   authStateLoaded: boolean;
   isLoggedIn: boolean;
   accessToken?: string | undefined;
+  refreshToken?: string | undefined;
   clearStateOnLogout: () => void;
   onLoginSuccess: (data: ILoginData) => void;
-}>({
+}
+
+const AuthContext = createContext<AuthContextType>({
   userEmail: undefined,
   authStateLoaded: false,
   isLoggedIn: false,
@@ -32,7 +42,11 @@ export const useAuth = () => {
   return useContext(AuthContext);
 };
 
-export const AuthProvider = ({ children }: any) => {
+interface AuthProviderProps {
+  children: ReactNode;
+}
+
+export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [authStateLoaded, setAuthStateLoaded] = useState(false);
   const [userEmail, setUserEmail] = useState<string>();
   const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
@@ -45,78 +59,13 @@ export const AuthProvider = ({ children }: any) => {
 
   const router = useRouter();
 
-  useEffect(() => {
-    (async () => {
-      await reloadPersistedAuthToken();
-      setAuthStateLoaded(true);
-      accessTokenRef.current && setIsLoggedIn(true);
-    })();
-    attachResponseInterceptor();
-  }, []);
-
-  useEffect(() => {
-    if (!accessTokenRef.current && authStateLoaded) {
-      router.push("/login");
-    }
-  }, [authStateLoaded]);
-
-  const onLoginSuccess = async ({ accessToken, refreshToken }: ILoginData) => {
-    await setPersistedAuthToken(accessToken, refreshToken);
-    setIsLoggedIn(true);
-    toastSuccess("Welcome Back");
-    router.push(`/dashboard`);
-  };
-
-  const reloadPersistedAuthToken = async () => {
-    try {
-      const accessToken = localStorage.getItem(ACCESS_TOKEN_KEY);
-      const refreshToken = localStorage.getItem(REFRESH_TOKEN_KEY);
-      const email = localStorage.getItem(EMAIL);
-      accessTokenRef.current = accessToken;
-      setRefreshToken(refreshToken || "");
-      setAccessToken(accessToken || "");
-      email && setUserEmail(email);
-    } catch (error) {
-      console.log("reloadPersistedAuthToken------", error);
-    }
-  };
-
-  const clearStateOnLogout = async () => {
-    accessTokenRef.current = null;
-    setAccessToken(undefined);
-    setRefreshToken(undefined);
-    removeOnLogoutKeys.forEach((key) => {
-      localStorage.removeItem(key);
-    });
-    sessionStorage.clear();
-    accessTokenRef.current && localStorage.clear();
-    setIsLoggedIn(false);
-    router.push("/login");
-  };
-
-  const setPersistedAuthToken = async (
-    accessToken: string,
-    refreshToken?: string
-  ) => {
-    try {
-      localStorage.setItem(ACCESS_TOKEN_KEY, accessToken);
-      refreshToken && localStorage.setItem(REFRESH_TOKEN_KEY, refreshToken);
-      setAccessToken(accessToken);
-      setRefreshToken(refreshToken);
-      accessTokenRef.current = accessToken;
-      refreshTokenCountRef.current = 0;
-    } catch (error) {
-      clearStateOnLogout();
-    }
-  };
-
   const attachResponseInterceptor = () => {
-    client.interceptors.request.use((config: any) => {
+    client.interceptors.request.use((config: InternalAxiosRequestConfig) => {
       config.headers.Authorization = accessTokenRef.current;
       return config;
     });
 
-    let requestArray: any = [];
+    let requestArray: InternalAxiosRequestConfig[] = [];
     client.interceptors.response.use(
       (response) => {
         if (response?.status === 403) {
@@ -126,27 +75,33 @@ export const AuthProvider = ({ children }: any) => {
           }, 1000);
         }
         if (response.data) {
-          const { success, data, errorMessage } = response.data;
+          const { success, errorMessage } = response.data;
 
           requestArray = requestArray.filter(Boolean);
-          if (requestArray.length != 0) {
-            requestArray.forEach(function (x: any, i: any) {
-              if (response.config?.url == x?.url) {
+          if (requestArray.length !== 0) {
+            requestArray.forEach(function (
+              x: InternalAxiosRequestConfig,
+              i: number
+            ) {
+              if (response.config?.url === x?.url) {
                 requestArray.splice(i, 1);
               }
             });
           }
 
-          if (success === false) {
+          if (success === false && errorMessage) {
             response.status = 500;
             return Promise.reject(new Error(errorMessage));
           }
         }
 
         requestArray = requestArray.filter(Boolean);
-        if (requestArray.length != 0) {
-          requestArray.forEach(function (x: any, i: any) {
-            if (x && response?.config?.url == x?.url) {
+        if (requestArray.length !== 0) {
+          requestArray.forEach(function (
+            x: InternalAxiosRequestConfig,
+            i: number
+          ) {
+            if (x && response?.config?.url === x?.url) {
               requestArray.splice(i, 1);
             }
           });
@@ -156,15 +111,19 @@ export const AuthProvider = ({ children }: any) => {
       async (error) => {
         if (
           error.data === "Invalid refresh token." ||
-          error.response.data === "Invalid refresh token."
+          error.response?.data === "Invalid refresh token."
         ) {
           clearStateOnLogout();
           toastWarning("Logging out");
         }
         const originalRequest = error.config; // save original request to be retried later
-        error?.response?.status !== 403 &&
-          error?.response?.status !== 401 &&
+        if (
+          error?.response?.status !== 403 &&
+          error?.response?.status !== 401
+        ) {
           requestArray.push(originalRequest);
+        }
+
         if (error?.response?.status === 403) {
           if (logoutCountRef.current < 5) {
             logoutCountRef.current = logoutCountRef.current + 1;
@@ -185,25 +144,102 @@ export const AuthProvider = ({ children }: any) => {
                 await clearStateOnLogout();
               }
             }
-          } catch (error: any) {
-            if (error.response.data.errorCode === 403) {
+          } catch (err: unknown) {
+            if (
+              err instanceof AxiosError &&
+              err.response?.data.errorCode === 403
+            ) {
               if (logoutCountRef.current < 1) {
                 logoutCountRef.current = logoutCountRef.current + 1;
-              } else {
               }
-              clearStateOnLogout();
+              await clearStateOnLogout();
             }
           }
         } else {
-          const errorMessage = "Something went wrong";
-          clearStateOnLogout();
+          await clearStateOnLogout();
         }
         return Promise.reject(error);
       }
     );
   };
 
-  const authContextValue = {
+  useEffect(() => {
+    const initAuth = async () => {
+      await reloadPersistedAuthToken();
+      setAuthStateLoaded(true);
+      if (accessTokenRef.current) {
+        setIsLoggedIn(true);
+      }
+    };
+
+    initAuth();
+    attachResponseInterceptor();
+  }, []);
+
+  useEffect(() => {
+    if (!accessTokenRef.current && authStateLoaded) {
+      router.push("/login");
+    }
+  }, [authStateLoaded, router]);
+
+  const onLoginSuccess = async ({ accessToken, refreshToken }: ILoginData) => {
+    await setPersistedAuthToken(accessToken, refreshToken);
+    setIsLoggedIn(true);
+    toastSuccess("Welcome Back");
+    router.push(`/dashboard`);
+  };
+
+  const reloadPersistedAuthToken = async () => {
+    try {
+      const accessToken = localStorage.getItem(ACCESS_TOKEN_KEY);
+      const refreshToken = localStorage.getItem(REFRESH_TOKEN_KEY);
+      const email = localStorage.getItem(EMAIL);
+      accessTokenRef.current = accessToken;
+      setRefreshToken(refreshToken || "");
+      setAccessToken(accessToken || "");
+      if (email) {
+        setUserEmail(email);
+      }
+    } catch (err) {
+      console.log("reloadPersistedAuthToken------", err);
+    }
+  };
+
+  const clearStateOnLogout = async () => {
+    accessTokenRef.current = null;
+    setAccessToken(undefined);
+    setRefreshToken(undefined);
+    removeOnLogoutKeys.forEach((key) => {
+      localStorage.removeItem(key);
+    });
+    sessionStorage.clear();
+    if (accessTokenRef.current) {
+      localStorage.clear();
+    }
+    setIsLoggedIn(false);
+    router.push("/login");
+  };
+
+  const setPersistedAuthToken = async (
+    accessToken: string,
+    refreshToken?: string
+  ) => {
+    try {
+      localStorage.setItem(ACCESS_TOKEN_KEY, accessToken);
+      if (refreshToken) {
+        localStorage.setItem(REFRESH_TOKEN_KEY, refreshToken);
+      }
+      setAccessToken(accessToken);
+      setRefreshToken(refreshToken);
+      accessTokenRef.current = accessToken;
+      refreshTokenCountRef.current = 0;
+    } catch (err) {
+      console.log("setPersistedAuthToken------", err);
+      await clearStateOnLogout();
+    }
+  };
+
+  const authContextValue: AuthContextType = {
     userEmail,
     authStateLoaded,
     isLoggedIn,

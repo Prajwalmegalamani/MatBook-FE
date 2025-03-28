@@ -15,7 +15,6 @@ const Pagination: React.FC<PaginationProps> = ({
   paginate,
   currentPage,
 }) => {
-  const pageNumbers = [];
   const totalPages = Math.ceil(totalWorkflows / workflowsPerPage);
 
   const renderPageNumbers = () => {

@@ -292,25 +292,26 @@ const Dashboard: React.FC = () => {
     setWorkflows(dummyData);
   };
 
-  function debounce(func: Function, delay: number) {
+  function debounce<T extends (...args: unknown[]) => void>(
+    func: T,
+    delay: number
+  ): (...args: Parameters<T>) => void {
     let timer: NodeJS.Timeout;
-    return function (...args: any[]) {
+
+    return function (this: unknown, ...args: Parameters<T>) {
       clearTimeout(timer);
-      timer = setTimeout(() => func(...args), delay);
+      timer = setTimeout(() => func.apply(this, args), delay);
     };
   }
 
-  const handleSearch = debounce((term: string) => {
+  const handleSearch = debounce((...args: unknown[]) => {
+    const term = args[0] as string;
     setSearchTerm(term);
     setCurrentPage(1);
   }, 500);
 
   const handleCreateWorkflow = () => {
     router.push("/creator");
-  };
-
-  const handleLogout = () => {
-    router.push("/login");
   };
 
   const handlePin = (id: number) => {

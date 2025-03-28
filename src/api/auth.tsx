@@ -1,5 +1,4 @@
 import axios from "axios";
-import { API_BASE_URL, REFRESH_TOKEN_KEY } from "@/lib/constants";
 import client from "@/lib/axiosClient";
 
 interface LoginResponse {
@@ -15,14 +14,13 @@ interface LoginResponse {
 }
 
 interface UserResponse {
-  id: number;
   username: string;
   email: string;
   firstName: string;
   lastName: string;
   gender: string;
   image: string;
-  [key: string]: any; // for other user fields
+  [key: string]: string; // for other user fields
 }
 
 interface RefreshResponse {

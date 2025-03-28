@@ -25,7 +25,7 @@ const WorkflowCreator: React.FC = () => {
   useEffect(() => {
     setSteps((prevSteps) => {
       let currentY = 50; // Starting Y position
-      let newSteps = prevSteps.map((step, index) => {
+      const newSteps = prevSteps.map((step) => {
         if (step.type === "start") {
           return { ...step, x: canvasWidth / 2 - 25, y: currentY };
         }
@@ -55,7 +55,7 @@ const WorkflowCreator: React.FC = () => {
     // Update Y positions when steps change
     setSteps((prevSteps) => {
       let currentY = 50; // Starting Y position
-      let newSteps = prevSteps.map((step, index) => {
+      const newSteps = prevSteps.map((step) => {
         if (step.type === "start") {
           return { ...step, x: canvasWidth / 2 - 25, y: currentY };
         }

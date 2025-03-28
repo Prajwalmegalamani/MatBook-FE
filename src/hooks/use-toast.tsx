@@ -1,13 +1,6 @@
 "use client";
-import React, {
-  createContext,
-  useContext,
-  useState,
-  useCallback,
-  useEffect,
-} from "react";
+import React, { createContext, useContext, useState, useEffect } from "react";
 import { capitalizeFirstLetter } from "../utils/utils";
-import { useRouter } from "next/navigation";
 
 export interface IToastContext {
   toastSuccess: (message: React.ReactNode) => void;
@@ -33,7 +26,6 @@ export const useToast = (): IToastContext => {
 export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
-  const router = useRouter();
   const [toasts, setToasts] = useState<
     {
       id: number;
@@ -164,21 +156,6 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   };
 
-  const containerStyle = {
-    position: "fixed" as "fixed",
-    top: "5%",
-    left: "50%",
-    transform: "translate(-50%, 0)", // Start at bottom
-    zIndex: 9999,
-    display: "flex",
-    flexDirection: "column" as "column",
-    gap: "10px",
-    justifyContent: "center" as "center",
-    alignItems: "center" as "center",
-    textAlign: "center" as "center",
-    color: "#10B981",
-  };
-
   const toastStyle = {
     minWidth: "300px",
     padding: "12px 16px",
@@ -192,7 +169,22 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({
 
   return (
     <ToastContext.Provider value={toastFunctions}>
-      <div style={containerStyle}>
+      <div
+        style={{
+          position: "fixed",
+          top: "5%",
+          left: "50%",
+          transform: "translate(-50%, 0)",
+          zIndex: 9999,
+          display: "flex",
+          flexDirection: "column" as const,
+          gap: "10px",
+          justifyContent: "center",
+          alignItems: "center",
+          textAlign: "center",
+          color: "#10B981",
+        }}
+      >
         {toasts.map((toast) => (
           <div
             key={toast.id}

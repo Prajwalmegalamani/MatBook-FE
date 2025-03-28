@@ -49,7 +49,7 @@ const WarningModal = ({
 
             <div className="text-center mt-2 mb-6">
               <p className="text-gray-800 font-medium mb-2">
-                "Are You Sure You Want To Execute The Process '{processName}'?
+                Are You Sure You Want To Execute The Process {processName}?
               </p>
               <p className="text-[#EE3425] text-xs font-normal">
                 You Cannot Undo This Step
